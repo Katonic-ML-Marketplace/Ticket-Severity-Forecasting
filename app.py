@@ -86,7 +86,7 @@ if st.button('Prediction'):
     st.line_chart(forecast)
 
     result = forecast.to_csv().encode('utf-8')
-    st.download_button('📥 Download Current Result',result,'result.csv')
+    st.download_button('📥 Download future datapoints',result,'result.csv')
 else:
     st.warning('Please Click on Prediction')
 
