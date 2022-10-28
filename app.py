@@ -11,7 +11,7 @@ im = Image.open('image/favicon.ico')
 
 st.set_page_config(page_title='Ticket priority Forecasting',
                    page_icon=im,
-                   layout='centered',
+                   layout='wide',
                    initial_sidebar_state='auto')
 
 st.image('image/logo.png')
@@ -22,73 +22,75 @@ This app provides 24 hours of future forecast of tickets of varying severity lev
 """)
 st.write('---')
 
-# Loads Dataset
-data_path = 'data/sample.csv'
-data_df = pd.read_csv(data_path, index_col = [0])
-# Pivot the data
-df = data_df.T
-data_df = data_df.T.copy().reset_index().rename(mapper={'index':'date','P1':'Priority_1','P2':'Priority_2','P3':'Priority_3'}, axis=1)
-st.write(data_df)
+data_file = st.file_uploader('Upload CSV file',type=['csv'])
 
-# showing fig1
-st.header('Ticket forecasting with P1')
-fig = px.line(data_df, x='date', y='Priority_1')
-fig.update_yaxes(title_text = 'Priority level 1')
-fig.update_xaxes(title_text='Date with Timestamps')
-fig.update_layout(uniformtext_minsize=8, uniformtext_mode='hide', margin=dict(t=0, b=0, l=0, r=0))
-st.plotly_chart(fig, use_container_width=False)
-
-# showing fig2
-st.header('Ticket forecasting with P2')
-fig = px.line(data_df, x='date', y='Priority_2')
-fig.update_yaxes(title_text = 'Priority level 2')
-fig.update_xaxes(title_text='Date with Timestamps')
-fig.update_layout(uniformtext_minsize=8, uniformtext_mode='hide', margin=dict(t=0, b=0, l=0, r=0))
-st.plotly_chart(fig, use_container_width=False)
-
-# showing fig3
-st.header('Ticket forecasting with P3')
-fig = px.line(data_df, x='date', y='Priority_3')
-fig.update_yaxes(title_text = 'Priority level 3')
-fig.update_xaxes(title_text='Date with Timestamps')
-fig.update_layout(uniformtext_minsize=8, uniformtext_mode='hide', margin=dict(t=0, b=0, l=0, r=0))
-st.plotly_chart(fig, use_container_width=False)
-
-# Main Panel
-
-# to retrain
-agree = st.checkbox('Check to retrain the model')
-filename = 'model/finalized_model.sav'
-
-if agree:
-
-    # Create model
-    model = VAR(df)
-    model.fit(10)
-
-    # save the model to disk
-    pickle.dump(model, open(filename, 'wb'))
+if data_file is None:
+    st.info("Please upload a CSV data")
 else:
-    # load the model from disk
-    model = pickle.load(open(filename, 'rb'))
+    # Loads Dataset
+    data_df = pd.read_csv(data_file, index_col = [0])
+    # Pivot the data
+    df = data_df.T
+    data_df = data_df.T.copy().reset_index().rename(mapper={'index':'date','P1':'Priority_1','P2':'Priority_2','P3':'Priority_3'}, axis=1)
+    st.write(data_df)
 
+    col1, col2, col3 = st.columns(3)
 
-# predict Future datapoints
+    with col1:
+        st.header("Priority_1")
+        fig = px.line(data_df, x='date', y='Priority_1')
+        fig.update_yaxes(title_text = 'Priority level 1')
+        fig.update_xaxes(title_text='Date with Timestamps')
+        fig.update_layout(uniformtext_minsize=8, uniformtext_mode='hide', margin=dict(t=0, b=0, l=0, r=0))
+        st.plotly_chart(fig, use_container_width=False)
 
-if st.button('Prediction'):
+    with col2:
+        st.header('Priority_2')
+        fig = px.line(data_df, x='date', y='Priority_2')
+        fig.update_yaxes(title_text = 'Priority level 2')
+        fig.update_xaxes(title_text='Date with Timestamps')
+        fig.update_layout(uniformtext_minsize=8, uniformtext_mode='hide', margin=dict(t=0, b=0, l=0, r=0))
+        st.plotly_chart(fig, use_container_width=False)
 
-    lag_order = model.fit(10).k_ar
+    with col3:
+        st.header('Priority_3')
+        fig = px.line(data_df, x='date', y='Priority_3')
+        fig.update_yaxes(title_text = 'Priority level 3')
+        fig.update_xaxes(title_text='Date with Timestamps')
+        fig.update_layout(uniformtext_minsize=8, uniformtext_mode='hide', margin=dict(t=0, b=0, l=0, r=0))
+        st.plotly_chart(fig, use_container_width=False)
 
-    forecast =pd.DataFrame()
-    forecast.index = pd.date_range(start ='2018-08-03 0:00',end='2018-08-03 22:00',freq='h')
-    forecast[['P1','P2','P3']] = model.fit(10).forecast(df.values[-lag_order:], 23)
-    st.subheader("Forecaster Diagram for future datapoints")
-    st.line_chart(forecast)
+    # to retrain
+    agree = st.checkbox('Check to retrain the model')
+    filename = 'model/finalized_model.sav'
 
-    result = forecast.to_csv().encode('utf-8')
-    st.download_button('📥 Download future datapoints',result,'result.csv')
-else:
-    st.warning('Please Click on Prediction')
+    if agree:
 
-    
+        # Create model
+        model = VAR(df)
+        model = model.fit(10)
+
+        # save the model to disk
+        pickle.dump(model, open(filename, 'wb'))
+    else:
+        # load the model from disk
+        model = pickle.load(open(filename, 'rb'))
+
+    # predict Future datapoints
+
+    if st.button('Prediction'):
+
+        lag_order = model.k_ar
+        forecast =pd.DataFrame()
+        forecast.index = pd.date_range(start ='2018-08-03 0:00',end='2018-08-03 22:00',freq='h')
+        forecast[['P1','P2','P3']] = model.forecast(df.values[-lag_order:], 23)
+        st.subheader("Forecaster Diagram for future datapoints")
+        st.line_chart(forecast)
+
+        result = forecast.to_csv().encode('utf-8')
+        st.download_button('📥 Download future datapoints',result,'result.csv')
+    else:
+        st.warning('Please Click on Prediction')
+
         
+            
