@@ -9,3 +9,8 @@ Ticket Severity Forecasting helps businesses to predict the number of tickets of
 
 2. This solution can be applied for forecasting number of ticket generated across varying priorities.
 
+### Data Dictionary
+
+- The input has to be a '.csv' file with 'utf-8' encoding. PLEASE NOTE: If your input .csv file is not 'utf-8' encoded, model   will not perform as expected
+1. Have an unique identifier column called 'maskedsku'. eg. 'maskedsku' can be shipmentid
+2. The date format of the columns should be: 'YYYY-MM-DD'
